@@ -56,6 +56,7 @@ class ImageApp:
 
         # Histogram section
         tk.Label(self.control_panel, text="Wyświetlanie histogramu").pack(anchor=tk.W)
+
         self.histogram_button = tk.Button(self.control_panel, text="Pokaż histogram", command=self.show_histogram)
         self.histogram_button.pack(anchor=tk.W, pady=5)
 
@@ -69,11 +70,57 @@ class ImageApp:
         tk.Radiobutton(self.control_panel, text="Średnia (RGB)", variable=self.hist_channel_var, value="RGB").pack(
             anchor=tk.W)
 
+        # Histogram section - rozszerzone
+        tk.Label(self.control_panel, text="Histogram - operacje").pack(anchor=tk.W)
+
+        # Wyświetlanie histogramu
+        self.histogram_button = tk.Button(self.control_panel, text="Pokaż histogram", command=self.show_histogram)
+        self.histogram_button.pack(anchor=tk.W, pady=5)
+
+        # Rozciąganie histogramu
+        self.stretch_hist_button = tk.Button(self.control_panel, text="Rozciągnij histogram",
+                                             command=self.stretch_histogram)
+        self.stretch_hist_button.pack(anchor=tk.W, pady=5)
+
+        # Wyrównanie histogramu
+        self.equalize_hist_button = tk.Button(self.control_panel, text="Wyrównaj histogram",
+                                              command=self.equalize_histogram)
+        self.equalize_hist_button.pack(anchor=tk.W, pady=5)
+
+        # Binaryzacja Otsu
+        self.otsu_button = tk.Button(self.control_panel, text="Binaryzacja Otsu", command=self.apply_otsu)
+        self.otsu_button.pack(anchor=tk.W, pady=5)
         # Status bar
         self.status_bar = tk.Label(self.root, text="Brak załadowanego obrazu", bd=1, relief=tk.SUNKEN, anchor=tk.W)
         self.status_bar.pack(side=tk.BOTTOM, fill=tk.X)
 
         self.image = None
+
+        # Rozciąganie histogramu
+    def stretch_histogram(self):
+        try:
+            self.image = self.histogram.stretch_histogram(self.image)
+            self.display_image(self.image)
+        except Exception as e:
+            messagebox.showerror("Błąd", str(e))
+
+        # Wyrównanie histogramu
+
+    def equalize_histogram(self):
+        try:
+            self.image = self.histogram.equalize_histogram(self.image)
+            self.display_image(self.image)
+        except Exception as e:
+            messagebox.showerror("Błąd", str(e))
+
+        # Binaryzacja Otsu
+
+    def apply_otsu(self):
+        try:
+            binary_img = self.binaryzation.apply_otsu(self.image)
+            self.display_image(binary_img)
+        except Exception as e:
+            messagebox.showerror("Błąd", str(e))
 
     def load_image(self):
         try:
@@ -100,7 +147,7 @@ class ImageApp:
         try:
             threshold = self.threshold_slider.get()
             channel = self.channel_var.get()
-            binary_img = self.binaryzation.apply_threshold(self.image, threshold, channel)
+            binary_img = self.binaryzation.apply_threshold_binaryzation(self.image, threshold, channel)
             self.display_image(binary_img)
         except Exception as e:
             messagebox.showerror("Błąd", str(e))

@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from PIL import Image
+from skimage import exposure
 
 
 class Histogram:
@@ -21,4 +23,20 @@ class Histogram:
 
         plt.title(f"Histogram - Kanał: {channel}")
         plt.show()
-        
+
+    def stretch_histogram(self, image):
+        if image is None:
+            raise ValueError("Brak obrazu do rozciągnięcia histogramu.")
+
+        img_array = np.array(image)
+        p_min, p_max = np.min(img_array), np.max(img_array)
+        stretched = (img_array - p_min) / (p_max - p_min) * 255
+        return Image.fromarray(stretched.astype(np.uint8))
+
+    def equalize_histogram(self, image):
+        if image is None:
+            raise ValueError("Brak obrazu do wyrównania histogramu.")
+
+        img_gray = np.array(image.convert("L"))  # Konwertujemy na odcienie szarości
+        img_equalized = exposure.equalize_hist(img_gray) * 255
+        return Image.fromarray(img_equalized.astype(np.uint8))
