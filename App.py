@@ -73,10 +73,6 @@ class ImageApp:
         # Histogram section - rozszerzone
         tk.Label(self.control_panel, text="Histogram - operacje").pack(anchor=tk.W)
 
-        # Wyświetlanie histogramu
-        self.histogram_button = tk.Button(self.control_panel, text="Pokaż histogram", command=self.show_histogram)
-        self.histogram_button.pack(anchor=tk.W, pady=5)
-
         # Rozciąganie histogramu
         self.stretch_hist_button = tk.Button(self.control_panel, text="Rozciągnij histogram",
                                              command=self.stretch_histogram)

@@ -48,11 +48,17 @@ class Binaryzation:
             raise ValueError("Brak obrazu do binaryzacji.")
 
         img_array = np.array(image)
-        if channel == "RGB":
-            avg_channel = img_array.mean(axis=2)
-            binary_img = np.where(avg_channel > threshold, 255, 0)
-        else:
-            channel_idx = {"R": 0, "G": 1, "B": 2}[channel]
-            binary_img = np.where(img_array[:, :, channel_idx] > threshold, 255, 0)
+
+        if len(img_array.shape) == 2:
+            # Obraz w odcieniach szarości, binaryzacja na podstawie jednego progu
+            binary_img = np.where(img_array > threshold, 255, 0)
+
+        elif len(img_array.shape) == 3:
+            if channel == "RGB":
+                avg_channel = img_array.mean(axis=2)
+                binary_img = np.where(avg_channel > threshold, 255, 0)
+            else:
+                channel_idx = {"R": 0, "G": 1, "B": 2}[channel]
+                binary_img = np.where(img_array[:, :, channel_idx] > threshold, 255, 0)
 
         return Image.fromarray(binary_img.astype(np.uint8))
