@@ -1,9 +1,11 @@
 import tkinter as tk
 from tkinter import messagebox
 from PIL import ImageTk
-from Image import ImageHandler
+from ImageHandler import ImageHandler
 from Binaryzation import Binaryzation
 from Plots import Histogram
+from ImageFilters import ImageFilters, PredatorFilter
+from ImageEditor import ImageEditor
 
 
 class ImageApp:
@@ -11,21 +13,55 @@ class ImageApp:
 
     def __init__(self, root):
         self.root = root
-        self.root.title("Binaryzacja obrazu oraz histogram")
+        self.root.title("Aplikacja biometryczna")
 
         self.image_handler = ImageHandler()
         self.binaryzation = Binaryzation()
         self.histogram = Histogram()
+        self.image_filters = ImageFilters()
+        self.image_edits = ImageEditor()
 
         # Menu
         self.menu = tk.Menu(self.root)
         self.root.config(menu=self.menu)
+
+        # Plik menu
         file_menu = tk.Menu(self.menu, tearoff=0)
         self.menu.add_cascade(label="Plik", menu=file_menu)
         file_menu.add_command(label="Wczytaj obraz", command=self.load_image)
         file_menu.add_command(label="Zapisz obraz", command=self.save_image)
         file_menu.add_separator()
         file_menu.add_command(label="Wyjdź", command=self.root.quit)
+
+        # Binaryzacja menu
+        binaryzation_menu = tk.Menu(self.menu, tearoff=0)
+        self.menu.add_cascade(label="Binaryzacja", menu=binaryzation_menu)
+        binaryzation_menu.add_command(label="Binaryzacja progowa", command=self.apply_threshold)
+        binaryzation_menu.add_separator()
+        binaryzation_menu.add_command(label="Binaryzacja Otsu", command=self.apply_otsu)
+        binaryzation_menu.add_command(label="Binaryzacja Niblacka", command=self.apply_niblack)
+        binaryzation_menu.add_command(label="Binaryzacja Sauvola", command=self.apply_sauvola)
+        binaryzation_menu.add_command(label="Binaryzacja Bernsena", command=self.apply_bernsen)
+        binaryzation_menu.add_command(label="Binaryzacja własna(OSTROŻNIE!!!)", command=self.apply_my_binaryzation)
+
+        # Histogram menu
+        histogram_menu = tk.Menu(self.menu, tearoff=0)
+        self.menu.add_cascade(label="Histogram", menu=histogram_menu)
+        histogram_menu.add_command(label="Pokaż histogram", command=self.show_histogram)
+        histogram_menu.add_separator()
+        histogram_menu.add_command(label="Rozciągnij histogram", command=self.stretch_histogram)
+        histogram_menu.add_command(label="Wyrównaj histogram", command=self.equalize_histogram)
+
+        # Filtry menu
+        filters_menu = tk.Menu(self.menu, tearoff=0)
+        self.menu.add_cascade(label="Filtry", menu=filters_menu)
+        filters_menu.add_command(label="Filtr Prewitta", command=self.apply_prewitt_filter)
+        filters_menu.add_command(label="Filtr Sobela", command=self.apply_sobel_filter)
+        filters_menu.add_command(label="Filtr Laplacjana", command=self.apply_laplacian_filter)
+        filters_menu.add_command(label="Rozmycie Gaussowskie", command=self.apply_gaussian_blur)
+        filters_menu.add_command(label="Filtr Kuwahara", command=self.apply_kuwahara_filter)
+        filters_menu.add_command(label="Pikselizacja", command=self.apply_pixelation)
+        filters_menu.add_command(label="Filtr Predatora", command=self.apply_predator_filter)
 
         # Main frame
         self.main_frame = tk.Frame(self.root)
@@ -48,75 +84,13 @@ class ImageApp:
         tk.Radiobutton(self.control_panel, text="Czerwony (R)", variable=self.channel_var, value="R").pack(anchor=tk.W)
         tk.Radiobutton(self.control_panel, text="Zielony (G)", variable=self.channel_var, value="G").pack(anchor=tk.W)
         tk.Radiobutton(self.control_panel, text="Niebieski (B)", variable=self.channel_var, value="B").pack(anchor=tk.W)
-        tk.Radiobutton(self.control_panel, text="Średnia (RGB)", variable=self.channel_var, value="RGB").pack(
-            anchor=tk.W)
+        tk.Radiobutton(self.control_panel, text="Średnia (RGB)", variable=self.channel_var, value="RGB").pack(anchor=tk.W)
 
-        self.apply_button = tk.Button(self.control_panel, text="Zastosuj binaryzację", command=self.apply_threshold)
-        self.apply_button.pack(anchor=tk.W, pady=5)
-
-        # Histogram section
-        tk.Label(self.control_panel, text="Wyświetlanie histogramu").pack(anchor=tk.W)
-
-        self.histogram_button = tk.Button(self.control_panel, text="Pokaż histogram", command=self.show_histogram)
-        self.histogram_button.pack(anchor=tk.W, pady=5)
-
-        self.hist_channel_var = tk.StringVar(value="RGB")
-        tk.Radiobutton(self.control_panel, text="Czerwony (R)", variable=self.hist_channel_var, value="R").pack(
-            anchor=tk.W)
-        tk.Radiobutton(self.control_panel, text="Zielony (G)", variable=self.hist_channel_var, value="G").pack(
-            anchor=tk.W)
-        tk.Radiobutton(self.control_panel, text="Niebieski (B)", variable=self.hist_channel_var, value="B").pack(
-            anchor=tk.W)
-        tk.Radiobutton(self.control_panel, text="Średnia (RGB)", variable=self.hist_channel_var, value="RGB").pack(
-            anchor=tk.W)
-
-        # Histogram section - rozszerzone
-        tk.Label(self.control_panel, text="Histogram - operacje").pack(anchor=tk.W)
-
-        # Rozciąganie histogramu
-        self.stretch_hist_button = tk.Button(self.control_panel, text="Rozciągnij histogram",
-                                             command=self.stretch_histogram)
-        self.stretch_hist_button.pack(anchor=tk.W, pady=5)
-
-        # Wyrównanie histogramu
-        self.equalize_hist_button = tk.Button(self.control_panel, text="Wyrównaj histogram",
-                                              command=self.equalize_histogram)
-        self.equalize_hist_button.pack(anchor=tk.W, pady=5)
-
-        # Binaryzacja Otsu
-        self.otsu_button = tk.Button(self.control_panel, text="Binaryzacja Otsu", command=self.apply_otsu)
-        self.otsu_button.pack(anchor=tk.W, pady=5)
         # Status bar
         self.status_bar = tk.Label(self.root, text="Brak załadowanego obrazu", bd=1, relief=tk.SUNKEN, anchor=tk.W)
         self.status_bar.pack(side=tk.BOTTOM, fill=tk.X)
 
         self.image = None
-
-        # Rozciąganie histogramu
-    def stretch_histogram(self):
-        try:
-            self.image = self.histogram.stretch_histogram(self.image)
-            self.display_image(self.image)
-        except Exception as e:
-            messagebox.showerror("Błąd", str(e))
-
-        # Wyrównanie histogramu
-
-    def equalize_histogram(self):
-        try:
-            self.image = self.histogram.equalize_histogram(self.image)
-            self.display_image(self.image)
-        except Exception as e:
-            messagebox.showerror("Błąd", str(e))
-
-        # Binaryzacja Otsu
-
-    def apply_otsu(self):
-        try:
-            binary_img = self.binaryzation.apply_otsu(self.image)
-            self.display_image(binary_img)
-        except Exception as e:
-            messagebox.showerror("Błąd", str(e))
 
     def load_image(self):
         try:
@@ -152,5 +126,107 @@ class ImageApp:
         try:
             channel = self.hist_channel_var.get()
             self.histogram.show_histogram(self.image, channel)
+        except Exception as e:
+            messagebox.showerror("Błąd", str(e))
+
+    def stretch_histogram(self):
+        try:
+            self.image = self.histogram.stretch_histogram(self.image)
+            self.display_image(self.image)
+        except Exception as e:
+            messagebox.showerror("Błąd", str(e))
+
+    def equalize_histogram(self):
+        try:
+            self.image = self.histogram.equalize_histogram(self.image)
+            self.display_image(self.image)
+        except Exception as e:
+            messagebox.showerror("Błąd", str(e))
+
+    def apply_otsu(self):
+        try:
+            binary_img = self.binaryzation.apply_otsu(self.image)
+            self.display_image(binary_img)
+        except Exception as e:
+            messagebox.showerror("Błąd", str(e))
+
+    def apply_niblack(self):
+        try:
+            binary_img = self.binaryzation.apply_niblack_binaryzation(self.image)
+            self.display_image(binary_img)
+        except Exception as e:
+            messagebox.showerror("Błąd", str(e))
+
+    def apply_sauvola(self):
+        try:
+            binary_img = self.binaryzation.apply_sauvola_binaryzation(self.image)
+            self.display_image(binary_img)
+        except Exception as e:
+            messagebox.showerror("Błąd", str(e))
+
+    def apply_bernsen(self):
+        try:
+            binary_img = self.binaryzation.apply_bernsen_binaryzation(self.image)
+            self.display_image(binary_img)
+        except Exception as e:
+            messagebox.showerror("Błąd", str(e))
+
+    def apply_my_binaryzation(self):
+        try:
+            binary_img = self.binaryzation.apply_custom_binaryzation(self.image)
+            self.display_image(binary_img)
+        except Exception as e:
+            messagebox.showerror("Błąd", str(e))
+
+    def apply_prewitt_filter(self):
+        try:
+            kernel = self.image_filters.prewitt_filter()
+            filtered_image = self.image_filters.apply_convolution(self.image, kernel)
+            self.display_image(filtered_image)
+        except Exception as e:
+            messagebox.showerror("Błąd", str(e))
+
+    def apply_sobel_filter(self):
+        try:
+            kernel = self.image_filters.sobel_filter()
+            filtered_image = self.image_filters.apply_convolution(self.image, kernel)
+            self.display_image(filtered_image)
+        except Exception as e:
+            messagebox.showerror("Błąd", str(e))
+
+    def apply_laplacian_filter(self):
+        try:
+            kernel = self.image_filters.laplacian_filter()
+            filtered_image = self.image_filters.apply_convolution(self.image, kernel)
+            self.display_image(filtered_image)
+        except Exception as e:
+            messagebox.showerror("Błąd", str(e))
+
+    def apply_gaussian_blur(self):
+        try:
+            kernel = self.image_filters.gaussian_blur()
+            blurred_image = self.image_filters.apply_convolution(self.image, kernel)
+            self.display_image(blurred_image)
+        except Exception as e:
+            messagebox.showerror("Błąd", str(e))
+
+    def apply_kuwahara_filter(self):
+        try:
+            filtered_image = self.image_filters.apply_kuwahara_filter(self.image)
+            self.display_image(filtered_image)
+        except Exception as e:
+            messagebox.showerror("Błąd", str(e))
+
+    def apply_pixelation(self):
+        try:
+            pixelated_image = self.image_filters.pixelation(self.image)
+            self.display_image(pixelated_image)
+        except Exception as e:
+            messagebox.showerror("Błąd", str(e))
+
+    def apply_predator_filter(self):
+        try:
+            predator_image = PredatorFilter.apply_predator_filter(self.image)
+            self.display_image(predator_image)
         except Exception as e:
             messagebox.showerror("Błąd", str(e))
