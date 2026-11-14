@@ -47,6 +47,7 @@ def zhang_suen(image, dark_foreground=True):
 def calibrated_thinning(image, dark_foreground=True):
     values = np.asarray(image.convert("L"))
     skeleton = values == (0 if dark_foreground else 255)
+    
     if min(skeleton.shape) < 3:
         return np.where(skeleton, 0, 255).astype(np.uint8)
 
