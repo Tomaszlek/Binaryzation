@@ -22,7 +22,9 @@ def _neighbors(image):
 
 
 def zhang_suen(image, dark_foreground=True):
+
     skeleton = _binary_image(image, dark_foreground).copy()
+    
     while True:
         changed = False
         for step in (0, 1):
