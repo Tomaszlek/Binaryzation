@@ -5,7 +5,12 @@ def _binary_image(image, dark_foreground=True):
     values = np.asarray(image.convert("L"))
     if values.ndim != 2:
         raise ValueError("Szkieletyzacja wymaga obrazu w odcieniach szarości.")
-    return values < 128 if dark_foreground else values >= 128
+    if not np.isin(values, (0, 255)).all():
+        raise ValueError(
+            "Obraz musi być binarny (piksele o wartościach 0 lub 255). "
+            "Najpierw zastosuj binaryzację."
+        )
+    return values == 0 if dark_foreground else values == 255
 
 
 def _neighbors(image):
@@ -24,7 +29,7 @@ def _neighbors(image):
 def zhang_suen(image, dark_foreground=True):
 
     skeleton = _binary_image(image, dark_foreground).copy()
-    
+
     while True:
         changed = False
         for step in (0, 1):
@@ -65,8 +70,10 @@ def calibrated_thinning(image, dark_foreground=True):
         217, 219, 220, 221, 222, 223, 225, 227, 229, 231, 237, 239, 240,
         241, 243, 244, 245, 246, 247, 248, 249, 251, 252, 253, 254, 255,
     ], dtype=np.uint16)
+
     pattern_lookup = np.zeros(256, dtype=bool)
     pattern_lookup[removable_patterns] = True
+
     interior = np.zeros_like(skeleton)
     interior[1:-1, 1:-1] = True
 
@@ -136,4 +143,3 @@ def calibrated_thinning(image, dark_foreground=True):
                 break
 
     return np.where(skeleton, 0, 255).astype(np.uint8)
-

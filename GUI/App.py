@@ -444,7 +444,11 @@ class ImageApp:
             messagebox.showerror("Brak obrazu", "Najpierw wczytaj obraz.")
             return
         gray = Image.fromarray(self.img_array).convert("L")
-        skeleton = algorithm(gray)
+        try:
+            skeleton = algorithm(gray)
+        except ValueError as error:
+            messagebox.showerror("Obraz niebinarny", str(error))
+            return
         self.img_array = np.repeat(np.asarray(skeleton)[:, :, None], 3, axis=2)
         self.selection_mask = None
         self.selection_source = None
@@ -469,7 +473,11 @@ class ImageApp:
             messagebox.showerror("Brak obrazu", "Najpierw wczytaj obraz.")
             return
         gray = Image.fromarray(self.img_array).convert("L")
-        skeleton = Image.fromarray(zhang_suen(gray))
+        try:
+            skeleton = Image.fromarray(zhang_suen(gray))
+        except ValueError as error:
+            messagebox.showerror("Obraz niebinarny", str(error))
+            return
         minutiae = detect_minutiae(skeleton)
         self.img_array = annotate_minutiae(skeleton, minutiae)
         endings = sum(kind == "ending" for _, _, kind in minutiae)
@@ -499,8 +507,12 @@ class ImageApp:
         second = Image.open(path).convert("L")
 
         first_gray = Image.fromarray(self.img_array).convert("L")
-        first_skeleton = Image.fromarray(zhang_suen(first_gray))
-        second_skeleton = Image.fromarray(zhang_suen(second))
+        try:
+            first_skeleton = Image.fromarray(zhang_suen(first_gray))
+            second_skeleton = Image.fromarray(zhang_suen(second))
+        except ValueError as error:
+            messagebox.showerror("Obraz niebinarny", str(error))
+            return
 
         first_points = detect_minutiae(first_skeleton)
         second_points = detect_minutiae(second_skeleton)
