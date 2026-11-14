@@ -3,7 +3,6 @@ from tkinter import messagebox, filedialog
 from PIL import ImageTk, Image
 import numpy as np
 from ImageAlgorithms.Binaryzation import Binaryzation
-from ImageAlgorithms.ImageFilters import ImageFilters, PredatorFilter
 from ImageAlgorithms.Minutiae import annotate_minutiae, detect_minutiae
 from ImageAlgorithms.Segmentation import color_selection_mask, resize_selection, watershed_segmentation
 from Skeletization.Skeletonization import calibrated_thinning, zhang_suen
@@ -48,7 +47,6 @@ class ImageApp:
         tk.Button(sidebar, text="Zapisz obraz", command=self.save_image).pack(fill=tk.X, pady=3)
         tk.Label(sidebar, text="Przetwarzanie", anchor=tk.W).pack(fill=tk.X, pady=(16, 4))
         for title, category in (
-            ("Filtry", "filters"),
             ("Binaryzacja", "binaryzation"),
             ("Segmentacja", "segmentation"),
             ("Szkieletyzacja", "skeletonization"),
@@ -73,7 +71,6 @@ class ImageApp:
             return
 
         titles = {
-            "filters": "Filtry obrazu",
             "binaryzation": "Binaryzacja",
             "segmentation": "Segmentacja i zaznaczanie",
             "skeletonization": "Szkieletyzacja",
@@ -93,10 +90,7 @@ class ImageApp:
         tk.Label(panel, text=titles[category], font=("TkDefaultFont", 12, "bold")).pack(
             anchor=tk.W, pady=(0, 10)
         )
-
-        if category == "filters":
-            self._build_filter_menu(panel)
-        elif category == "binaryzation":
+        if category == "binaryzation":
             self._build_binaryzation_menu(panel)
         elif category == "segmentation":
             self._build_segmentation_menu(panel)
@@ -114,26 +108,6 @@ class ImageApp:
     @staticmethod
     def _menu_button(parent, label, command):
         tk.Button(parent, text=label, command=command).pack(fill=tk.X, pady=3)
-
-    def _build_filter_menu(self, panel):
-        tk.Label(panel, text="Wybierz filtr").pack(anchor=tk.W)
-        tk.OptionMenu(
-            panel,
-            self.filter_method_var,
-            "Rozmycie Gaussa",
-            "Filtr medianowy",
-            "Pikselizacja",
-            "Filtr Predatora",
-        ).pack(fill=tk.X, pady=(2, 8))
-        tk.Scale(
-            panel, from_=3, to=15, resolution=2, orient=tk.HORIZONTAL,
-            label="Rozmiar filtra", variable=self.filter_size_value
-        ).pack(fill=tk.X)
-        tk.Scale(
-            panel, from_=0.2, to=5.0, resolution=0.1, orient=tk.HORIZONTAL,
-            label="Sigma Gaussa", variable=self.filter_sigma_value
-        ).pack(fill=tk.X)
-        self._menu_button(panel, "Zastosuj filtr", self.apply_selected_filter)
 
     def _build_binaryzation_menu(self, panel):
         tk.Label(panel, text="Metoda").pack(anchor=tk.W)
@@ -203,7 +177,6 @@ class ImageApp:
 
     def _build_minutiae_menu(self, panel):
         self._menu_button(panel, "Wykryj minucje na obrazie", self.show_minutiae)
-        self._menu_button(panel, "Porównaj z drugim odciskiem", self.compare_minutiae)
 
     def load_image(self):
         file_path = filedialog.askopenfilename(
@@ -388,45 +361,6 @@ class ImageApp:
         self.selection_mask = None
         self.selection_source = None
         self.update_canvas()
-
-    def apply_selected_filter(self):
-        filters = {
-            "Rozmycie Gaussa": self.apply_gaussian_blur,
-            "Filtr medianowy": self.apply_median_filter,
-            "Pikselizacja": self.apply_pixelation,
-            "Filtr Predatora": self.apply_predator_filter,
-        }
-        filters[self.filter_method_var.get()]()
-
-    def apply_gaussian_blur(self):
-        size = self.filter_size_value.get()
-        kernel = ImageFilters.gaussian_blur(
-            size=size, sigma=self.filter_sigma_value.get()
-        )
-        self._apply_image_filter(
-            lambda image: ImageFilters.apply_convolution(image, kernel)
-        )
-
-    def apply_median_filter(self):
-        self._apply_image_filter(
-            lambda image: ImageFilters.apply_median_filter(
-                image, kernel_size=self.filter_size_value.get()
-            )
-        )
-
-    def apply_pixelation(self):
-        self._apply_image_filter(
-            lambda image: ImageFilters.pixelation(
-                image, pixel_size=self.filter_size_value.get()
-            )
-        )
-
-    def apply_predator_filter(self):
-        self._apply_image_filter(
-            lambda image: PredatorFilter.apply_predator_filter(
-                image, pixel_size=self.filter_size_value.get()
-            )
-        )
 
     def resize_selected(self, operation):
         if self.selection_mask is None or self.selection_source is None:

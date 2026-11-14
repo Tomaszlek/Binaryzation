@@ -47,9 +47,6 @@ def zhang_suen(image, dark_foreground=True):
 def calibrated_thinning(image, dark_foreground=True):
     values = np.asarray(image.convert("L"))
     skeleton = values == (0 if dark_foreground else 255)
-    
-    if min(skeleton.shape) < 3:
-        return np.where(skeleton, 0, 255).astype(np.uint8)
 
     removable_patterns = np.array([
         5, 7, 13, 15, 20, 21, 22, 23, 28, 29, 30, 31, 52, 53, 54, 55,
@@ -112,18 +109,20 @@ def calibrated_thinning(image, dark_foreground=True):
 
     for first_condition, second_condition, third_condition in calibrations:
         while True:
-            count, transitions, _ = metrics(skeleton)
+            count, transitions, pattern = metrics(skeleton)
             gray = skeleton & interior & first_condition(count, transitions)
             if not np.any(gray):
                 break
 
             marked_for_deletion = gray & second_condition(count, transitions)
             removed = marked_for_deletion & third_condition(count, transitions)
+            
             if np.any(removed):
                 skeleton[removed] = False
 
             remaining_gray = gray & ~removed
-            _, _, pattern = metrics(skeleton)
+            count, transitions, pattern = metrics(skeleton)
+
             removed_by_pattern = (
                 remaining_gray & pattern_lookup[pattern.astype(np.uint8)]
             )
