@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def detect_minutiae(image, min_distance=5):
+def detect_minutiae(image, min_distance=5): #pobawić się ze zmianami w min_distance
     padded = np.pad(image, 1, mode="constant")
 
     neighbors = (
