@@ -62,7 +62,7 @@ def calibrated_thinning(image, dark_foreground=True):
     pattern_lookup = np.zeros(256, dtype=bool)
     pattern_lookup[removable_patterns] = True
 
-    interior = np.zeros_like(skeleton)
+    interior = np.zeros_like(skeleton) #pixel wewnetrzny
     interior[1:-1, 1:-1] = True
 
     calibrations = (
@@ -94,7 +94,7 @@ def calibrated_thinning(image, dark_foreground=True):
         transitions = sum(
             (neighbors[index] != neighbors[(index + 1) % 8]).astype(np.uint8)
             for index in range(8)
-        )
+        ) #przejscie z 0 na 1 w okolicy pixela srodkowego
         pattern = (
             neighbors[0].astype(np.uint16)
             + neighbors[1].astype(np.uint16) * 2
@@ -107,20 +107,20 @@ def calibrated_thinning(image, dark_foreground=True):
         )
         return count, transitions, pattern
 
-    for first_condition, second_condition, third_condition in calibrations:
+    for first_condition, second_condition, third_condition in calibrations: # odpowiada to f1, f2 i f3
         while True:
             count, transitions, pattern = metrics(skeleton)
-            gray = skeleton & interior & first_condition(count, transitions)
+            gray = skeleton & interior & first_condition(count, transitions) #oznaczy to jako pixel szary
             if not np.any(gray):
                 break
 
-            marked_for_deletion = gray & second_condition(count, transitions)
+            marked_for_deletion = gray & second_condition(count, transitions) #dla tego szarego pixela jak spełni 2 warunek to usuniecie
             removed = marked_for_deletion & third_condition(count, transitions)
-            
+            # dla oznaczpnego pixela szarego, jeśli spełni 3 warunek to usuwamy go zmieniajac na biały
             if np.any(removed):
                 skeleton[removed] = False
 
-            remaining_gray = gray & ~removed
+            remaining_gray = gray & ~removed #pozostałe szare usuwamy przez matrycę podana przez pana Patryka
             count, transitions, pattern = metrics(skeleton)
 
             removed_by_pattern = (
