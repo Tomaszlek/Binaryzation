@@ -1,6 +1,5 @@
 import tkinter as tk
-from App import ImageApp
-
+from GUI.App import ImageApp
 
 if __name__ == "__main__":
     root = tk.Tk()

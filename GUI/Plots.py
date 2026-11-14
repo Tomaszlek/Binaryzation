@@ -5,8 +5,6 @@ from skimage import exposure
 
 
 class Histogram:
-    """Klasa odpowiedzialna za wyświetlanie histogramów obrazu."""
-
     def show_histogram(self, image, channel):
         if image is None:
             raise ValueError("Brak obrazu do wyświetlenia histogramu.")
@@ -37,6 +35,6 @@ class Histogram:
         if image is None:
             raise ValueError("Brak obrazu do wyrównania histogramu.")
 
-        img_gray = np.array(image.convert("L"))  # Konwertujemy na odcienie szarości
+        img_gray = np.array(image.convert("L"))  #konwersja po luminancji
         img_equalized = exposure.equalize_hist(img_gray) * 255
         return Image.fromarray(img_equalized.astype(np.uint8))
